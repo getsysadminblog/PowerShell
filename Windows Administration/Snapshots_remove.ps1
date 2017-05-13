@@ -7,6 +7,7 @@
 
 # Input Parameters
 param (
+    [string]$computername = $env:computername
     [string]$hours = 24
     [string]$outfile = $null
 )
@@ -18,11 +19,11 @@ $time = (Get-Date).AddMinutes(-$hours)
 Import-Module Hyper-V
 
 # Find all snapshots and load them into an Array.
-$vms = Get-VM | Where { $_.State –eq ‘Running’ } 
+$vms = Get-VM -ComputerName $computername | Where { $_.State –eq ‘Running’ } 
 
 # For each running VM, list snapshots.
 Foreach($vm in $vms){
-    $snapshots = Get-VMSnapshot -VMName TestVM | Where-Object {$_.CreationTime -lt $time } | FT
+    $snapshots = Get-VMSnapshot -VMName $vm | Where-Object {$_.CreationTime -lt $time } | FT
     Write-Host "The following snapshots are older than $hours and will be deleted"
     Write-Output $snapshots
     Write-Output $snapshots | Out-File $outfile -append
@@ -35,7 +36,7 @@ Foreach($vm in $vms){
 
 # Verify cleanup of snapshots.
 Foreach($vm in $vms){
-    $snapshots = Get-VMSnapshot -VMName TestVM | Where-Object {$_.CreationTime -lt $time } | FT
+    $snapshots = Get-VMSnapshot -VMName $vm | Where-Object {$_.CreationTime -lt $time } | FT
     Write-Host "The following snapshots are remaining after cleanup"
     Write-Output $snapshots
     Write-Output $snapshots | Out-File $outfile -append
